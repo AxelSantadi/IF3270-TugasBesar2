@@ -1,14 +1,10 @@
-import tensorflow as tf
-from tensorflow.keras import layers, models
-from sklearn.model_selection import train_test_split
+from utils import load_cifar10
+from model import CNN
 
-# Load CIFAR-10 dataset
-(x_train_full, y_train_full), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
+x_train, y_train, x_val, y_val = load_cifar10()
 
-# Normalize pixel values
-x_train_full, x_test = x_train_full / 255.0, x_test / 255.0
+model = CNN()
 
-# Split 
-x_train, x_val, y_train, y_val = train_test_split(
-    x_train_full, y_train_full, test_size=0.2, random_state=42
-)
+output = model.forward(x_train[:10]) 
+
+print("Output shape:", output.shape)
