@@ -1,5 +1,5 @@
 import tensorflow as tf
-from layers import Conv2DLayer, MaxPooling2DLayer, AveragePooling2DLayer,FlattenLayer, DenseLayer
+from layers import MaxPooling2DLayer, AveragePooling2DLayer,FlattenLayer, DenseLayer, Conv2DLayer
 
 class CNNFromScratch:
     def __init__(self, keras_model):
