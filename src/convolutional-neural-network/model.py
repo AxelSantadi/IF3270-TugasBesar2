@@ -7,16 +7,13 @@ class CNNFromScratch:
         self.load_weights_from_keras(keras_model)
     
     def load_weights_from_keras(self, keras_model):
-        """
-        Load weights dari model Keras yang sudah di-train
-        """
         layer_idx = 0
         for layer in keras_model.layers:
             if isinstance(layer, tf.keras.layers.Conv2D):
                 weights = layer.get_weights()
                 conv_layer = Conv2DLayer(
-                    weights=weights[0],  # kernel weights
-                    biases=weights[1],   # biases
+                    weights=weights[0],  
+                    biases=weights[1],   
                     activation='relu',
                     padding=layer.padding
                 )
@@ -50,16 +47,13 @@ class CNNFromScratch:
                         activation = 'softmax'
                 
                 dense_layer = DenseLayer(
-                    weights=weights[0],  # weight matrix
-                    biases=weights[1],   # biases
+                    weights=weights[0],  
+                    biases=weights[1],  
                     activation=activation
                 )
                 self.layers.append(dense_layer)
     
     def predict(self, x):
-        """
-        Forward propagation
-        """
         output = x
         for layer in self.layers:
             if hasattr(layer, 'forward'):
