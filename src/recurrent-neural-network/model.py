@@ -1,5 +1,5 @@
 import numpy as np
-from layers import Embedding, RNN, Dropout, Dense, softmax, BiRNN
+from layers import Embedding, RNN, Dropout, Dense, softmax, BiRNN as BiRNN_class_from_layers 
 
 class SimpleRNNModel:
     def __init__(self,
@@ -19,21 +19,18 @@ class SimpleRNNModel:
             raise ValueError("Length of return_sequences_list must match num_layers")
 
         for i in range(num_layers):
-            is_last_rnn = (i == num_layers - 1)
             current_return_sequences = return_sequences_list[i]
             
+            rnn_layer_instance = None
             if bidirectional:
-                rnn_layer = BiRNN(current_input_dim, hidden_dim, return_sequences=current_return_sequences)
+                rnn_layer_instance = BiRNN_class_from_layers(current_input_dim, hidden_dim, return_sequences=current_return_sequences)
                 current_input_dim = hidden_dim * 2
             else:
-                rnn_layer = RNN(current_input_dim, hidden_dim, return_sequences=current_return_sequences)
+                rnn_layer_instance = RNN(current_input_dim, hidden_dim, return_sequences=current_return_sequences)
                 current_input_dim = hidden_dim
             
-            self.rnns.append(rnn_layer)
-            if not current_return_sequences:
-                pass
-
-
+            self.rnns.append(rnn_layer_instance)
+            
         self.dense = Dense(current_input_dim, num_classes)
         self._training = True
 
@@ -44,17 +41,13 @@ class SimpleRNNModel:
         self.dropout.set_training_mode(training)
 
         h = self.embed.forward(x)
-        
+
         for i, rnn_layer in enumerate(self.rnns):
             if h.ndim == 2 and i > 0 :
-                h = h[:, np.newaxis, :]
+                 h = h[:, np.newaxis, :]
 
             h = rnn_layer.forward(h)
-
-        if h.ndim == 3 and self.rnns and not self.rnns[-1].return_sequences:
-            pass
-
-
+        
         h = self.dropout.forward(h, training) 
         logits = self.dense.forward(h)
         return softmax(logits)
@@ -69,7 +62,7 @@ class SimpleRNNModel:
         idx += 1
 
         for rnn_layer_custom in self.rnns:
-            if isinstance(rnn_layer_custom, BiRNN):
+            if isinstance(rnn_layer_custom, BiRNN_class_from_layers):
                 rnn_layer_custom.set_weights(
                     keras_weights[idx],      
                     keras_weights[idx+1],    
@@ -88,9 +81,6 @@ class SimpleRNNModel:
                 idx += 3
             else:
                 raise TypeError("Unknown RNN layer type in custom model during weight loading")
-
-        self.dropout.set_weights(keras_weights[idx])
-        idx += 1
 
         self.dense.set_weights(keras_weights[idx], keras_weights[idx+1])
         idx += 2
