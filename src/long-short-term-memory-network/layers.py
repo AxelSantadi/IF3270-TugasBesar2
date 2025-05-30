@@ -20,19 +20,12 @@ class Embedding:
 class Dropout:
     def __init__(self, rate):
         self.rate = rate
-        self._training = True # Default to training mode
 
-    def forward(self, x, training=None): # Allow overriding training mode
-        if training is None:
-            training = self._training # Use instance's training mode if not specified
-            
-        if not training or self.rate == 0.0:
+    def forward(self, x): # Allow overriding training mode
+        if self.rate == 0.0:
             return x
         mask = (np.random.rand(*x.shape) > self.rate) / (1.0 - self.rate)
         return x * mask
-    
-    def set_training_mode(self, training: bool): # Method to explicitly set training mode
-        self._training = training
 
 class Dense:
     def __init__(self, input_dim, output_dim):
@@ -51,8 +44,8 @@ class Dense:
 class LSTM:
     def __init__(self, input_dim, hidden_dim):
         """
-        input_dim  = D, dimensionality of each x_t
-        hidden_dim = H, number of hidden units
+        input_dim  = D
+        hidden_dim = H
         """
         self.D = input_dim
         self.H = hidden_dim
@@ -62,9 +55,9 @@ class LSTM:
 
     def set_weights(self, W, U, b):
         """
-        W: shape (D, 4H)
-        U: shape (H, 4H)
-        b: shape (4H,)
+        W: shape (D, 4H)    Input weights
+        U: shape (H, 4H)    Short term memory weights
+        b: shape (4H,)      Bias for all 
         """
         assert W.shape == (self.D, 4*self.H)
         assert U.shape == (self.H, 4*self.H)
@@ -90,20 +83,20 @@ class LSTM:
         assert D == self.D, "Input dimension mismatch"
         assert self.W is not None, "Weights not set!"
         
-        h = np.zeros(self.H) if h0 is None else h0
-        c = np.zeros(self.H) if c0 is None else c0
+        h = np.zeros(self.H) if h0 is None else h0 # Short term memory
+        c = np.zeros(self.H) if c0 is None else c0 # Long term memory
         h_seq = np.zeros((T, self.H))
         
         for t in range(T):
             x_t = x_seq[t]
-            z = x_t @ self.W + h @ self.U + self.b
-            z_i, z_f, z_c, z_o = np.split(z, 4)
-            i_t = self._sigmoid(z_i)
-            f_t = self._sigmoid(z_f)
+            z = x_t @ self.W + h @ self.U + self.b # Apparently @ is for matrix multiplication
+            z_i, z_f, z_c, z_o = np.split(z, 4) # h5 format stores weights liek this : 
+            i_t = self._sigmoid(z_i) # input gate coef
+            f_t = self._sigmoid(z_f) # forget gate coef
             c_hat = np.tanh(z_c)
             o_t = self._sigmoid(z_o)
-            c = f_t * c + i_t * c_hat
-            h = o_t * np.tanh(c)
+            c = f_t * c + i_t * c_hat # new long term memory
+            h = o_t * np.tanh(c) # new short term memory
             h_seq[t] = h
         
         return h_seq, (h, c)
@@ -145,13 +138,4 @@ class BidirectionalLSTM:
         h_final = np.concatenate([h_f, h_b_rev], axis=0)    # (2H,)
         c_final = np.concatenate([c_f, c_b_rev], axis=0)
         return h_seq, (h_final, c_final)
-
-# Example usage:
-# Assume W_f, U_f, b_f, W_b, U_b, b_b are numpy arrays from your weights file
-# x_seq = np.random.randn(100, 128)  # e.g., T=100, D=128
-# bilstm = BidirectionalLSTM(input_dim=128, hidden_dim=64)
-# bilstm.set_weights(W_f, U_f, b_f, W_b, U_b, b_b)
-# h_seq, (h_final, c_final) = bilstm.forward(x_seq)
-# print("h_seq shape:", h_seq.shape)      # => (100, 128)
-# print("h_final shape:", h_final.shape)  # => (128,)
 
