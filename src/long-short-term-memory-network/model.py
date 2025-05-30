@@ -79,4 +79,4 @@ def load_weights(filename):
     with h5py.File(filename,'r') as f:
         print(f['layers']['bidirectional']['forward_layer']['cell']['vars']['2'][()][:4])
         
-load_weights("weightbruh.weights.h5")
+# load_weights("weightbruh.weights.h5")
