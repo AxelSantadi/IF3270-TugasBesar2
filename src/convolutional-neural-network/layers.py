@@ -2,17 +2,15 @@ import numpy as np
 
 class Conv2DLayer:
     def __init__(self, weights, biases, activation='relu', padding='same'):
-        self.weights = weights  # Shape: (kernel_h, kernel_w, input_channels, output_channels)
-        self.biases = biases    # Shape: (output_channels,)
+        self.weights = weights 
+        self.biases = biases   
         self.activation = activation
         self.padding = padding
     
     def forward(self, x):
-        # Implementasi konvolusi 2D
         batch_size, input_h, input_w, input_channels = x.shape
         kernel_h, kernel_w, _, output_channels = self.weights.shape
         
-        # Padding
         if self.padding == 'same':
             pad_h = kernel_h // 2
             pad_w = kernel_w // 2
@@ -20,24 +18,18 @@ class Conv2DLayer:
         else:
             x_padded = x
             
-        # Output dimensions
         output_h = input_h if self.padding == 'same' else input_h - kernel_h + 1
         output_w = input_w if self.padding == 'same' else input_w - kernel_w + 1
         
-        # Initialize output
         output = np.zeros((batch_size, output_h, output_w, output_channels))
         
-        # Perform convolution
         for b in range(batch_size):
             for h in range(output_h):
                 for w in range(output_w):
                     for c in range(output_channels):
-                        # Extract patch
                         patch = x_padded[b, h:h+kernel_h, w:w+kernel_w, :]
-                        # Compute convolution
                         output[b, h, w, c] = np.sum(patch * self.weights[:, :, :, c]) + self.biases[c]
         
-        # Apply activation
         if self.activation == 'relu':
             output = np.maximum(0, output)
             
@@ -97,19 +89,16 @@ class AveragePooling2DLayer:
 
 class DenseLayer:
     def __init__(self, weights, biases, activation=None):
-        self.weights = weights  # Shape: (input_features, output_features)
-        self.biases = biases    # Shape: (output_features,)
+        self.weights = weights 
+        self.biases = biases    
         self.activation = activation
     
     def forward(self, x):
-        # Linear transformation
         output = np.dot(x, self.weights) + self.biases
         
-        # Apply activation
         if self.activation == 'relu':
             output = np.maximum(0, output)
         elif self.activation == 'softmax':
-            # Apply softmax
             exp_scores = np.exp(output - np.max(output, axis=1, keepdims=True))
             output = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
             
